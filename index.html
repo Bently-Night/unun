@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Manager</title>
+    <style>
+        /* General reset */
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        /* Default mobile-first styling */
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Sidebar */
+        
+        .sidebar {
+            width: 100%;
+            background-color: #333;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .sidebar h2,
+        .sidebar h3 {
+            margin: 10px 0;
+        }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        /* Main content */
+        
+        .main-content {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        /* Header */
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 15px;
+            border-bottom: 1px solid #ccc;
+        }
+        /* Profile Picture */
+        
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        /* Dropdown */
+        
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 15px;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            z-index: 1000;
+            width: 150px;
+            text-align: left;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: #333;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .dropdown.visible {
+            display: block;
+        }
+        /* Modal */
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+        
+        .modal input,
+        .modal textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        
+        .modal button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* Larger screen adjustments */
+        
+        @media (min-width: 768px) {
+            .sidebar {
+                width: 250px;
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                text-align: left;
+                padding: 20px;
+            }
+            .main-content {
+                margin-left: 250px;
+                width: calc(100% - 250px);
+                padding: 20px;
+            }
+            .header {
+                position: sticky;
+                top: 0;
+            }
+            .dropdown {
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Options</h2>
+        <button onclick="showAddProjectModal()">New Project</button>
+        <button onclick="toggleProjectDisplay()">Your Code</button>
+        <h3>for devs</h3>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>welcome!</h1>
+            <img src="https://as2.ftcdn.net/v2/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.jpg" alt="Profile Picture" class="profile-pic" id="profile-pic">
+            <div class="dropdown" id="dropdown">
+                <div class="dropdown-item" onclick="showUpdateProfile()">Update Profile</div>
+                <div class="dropdown-item" onclick="logout()">Logout</div>
+            </div>
+        </div>
+
+        <div id="projects-container" style="display: none;">
+            <h2>Your Projects (for devs)</h2>
+        </div>
+    </div>
+
+    <div class="modal" id="add-project-modal">
+        <div class="modal-content">
+
+            <h3>Add New Project</h3>
+            <input type="text" id="project-name" placeholder="Project Name">
+            <textarea id="project-code" placeholder="Project Code" rows="4"></textarea>
+            <button onclick="saveProject()" id="save">Save Project</button>
+            <button onclick="closeAddProjectModal()">Cancel</button>
+        </div>
+    </div>
+    <style>
+        #save {
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <div class="modal" id="update-profile-modal">
+        <div class="modal-content">
+            <h3>Update Profile</h3>
+            <input type="text" id="new-username" placeholder="New Username">
+            <input type="text" id="new-profile-url" placeholder="Profile Picture URL">
+            <button onclick="saveProfile()" id="save">Save</button>
+            <button onclick="closeUpdateProfile()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const profilePic = document.getElementById('profile-pic');
+        const dropdown = document.getElementById('dropdown');
+        const projectsContainer = document.getElementById('projects-container');
+        const addProjectModal = document.getElementById('add-project-modal');
+        const updateProfileModal = document.getElementById('update-profile-modal');
+
+        profilePic.addEventListener('click', function() {
+            dropdown.classList.toggle('visible');
+        });
+
+        function toggleProjectDisplay() {
+            projectsContainer.style.display = projectsContainer.style.display === 'none' ? 'block' : 'none';
+            if (projectsContainer.style.display === 'block') {
+                displayProjects();
+            }
+        }
+
+        function showAddProjectModal() {
+            addProjectModal.style.display = 'flex';
+        }
+
+        function closeAddProjectModal() {
+            addProjectModal.style.display = 'none';
+        }
+
+        function saveProject() {
+            const projectName = document.getElementById('project-name').value;
+            const projectCode = document.getElementById('project-code').value;
+
+            if (!projectName || !projectCode) {
+                alert("Please enter both project name and code.");
+                return;
+            }
+
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+            projects.push({
+                name: projectName,
+                code: projectCode
+            });
+            localStorage.setItem('projects', JSON.stringify(projects));
+            alert("Project saved!");
+            closeAddProjectModal();
+        }
+
+        function displayProjects() {
+            projectsContainer.innerHTML = '<h2>Your Projects</h2>';
+            const projects = JSON.parse(localStorage.getItem('projects')) || [];
+
+            if (projects.length === 0) {
+                projectsContainer.innerHTML += '<p>No projects found. Add a new project to get started.</p>';
+                return;
+            }
+
+            projects.forEach((project) => {
+                const projectDiv = document.createElement('div');
+                projectDiv.className = 'project-container';
+
+                const projectTitle = document.createElement('div');
+                projectTitle.className = 'project-title';
+                projectTitle.textContent = project.name;
+
+                const projectCode = document.createElement('pre');
+                projectCode.textContent = project.code;
+
+                projectDiv.appendChild(projectTitle);
+                projectDiv.appendChild(projectCode);
+                projectsContainer.appendChild(projectDiv);
+            });
+        }
+
+        function showUpdateProfile() {
+            updateProfileModal.style.display = 'flex';
+        }
+
+        function closeUpdateProfile() {
+            updateProfileModal.style.display = 'none';
+        }
+
+        function saveProfile() {
+            const newUsername = document.getElementById('new-username').value;
+            const newProfileUrl = document.getElementById('new-profile-url').value;
+
+            if (newUsername) {
+                alert(`Username updated to: ${newUsername}`);
+            }
+            if (newProfileUrl) {
+                profilePic.src = newProfileUrl;
+            }
+
+            closeUpdateProfile();
+        }
+
+        function logout() {
+           What do i adddd window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+
+</html>
